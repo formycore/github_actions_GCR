@@ -1,0 +1,90 @@
+- GCR container registry
+- in the second section we push docker image to artifactory registry
+- couple of ways to granting access to GCR
+   - for github actions we need to create identity
+   - create a new service account
+   - name: <github-actions>
+   - skip grant this service account access to project
+   - we can do this from the IAM section
+   - Done
+   - select the service account
+   - click on keys
+   - json
+   
+-----------------------------------------------------
+   - copy the email of the service account
+   - in the IAM 
+   - click ADD
+   - new pricipals
+      - paste the service account here
+   - select storage admin
+   - save
+
+-----------------------------------------------------
+ - create a folder in the git
+    - create .github
+        - under .github/workflows
+            - under .github/workflows/gcp.yml
+*****************************************************************************
+gcp.yml
+---
+name: Build and push python image to Google cloud platform
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build-push-gcr:
+    name: Build and push to GCP
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: gitgcr
+      IMAGE_TAG: latest
+      PROJECT_ID: affable-bastion-347917
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - uses: google-github-actions/setup-gcloud@master
+      with:
+        service_account_key: ${{ secrets.service_account_key }}
+        project: ${{ env.PROJECT_ID }}
+        export_default_credentials: true
+    
+    - name: Build Docker Image
+      run: docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    
+    - name: Configure Docker client
+      run: | -
+        gcloud auth configure-docker --quiet
+
+    - name: Push to GCR
+      env:
+        GIT_TAG: v0.1.0
+      run: | -
+        docker tag $IMAGE_NAME:$IMAGE_TAG gcr.io/$PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG
+        docker tag $IMAGE_NAME:$IMAGE_TAG gcr.io/$PROJECT_ID/$IMAGE_NAME:$GIT_TAG
+        docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:$IMAGE_TAG
+        docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:$GIT_TAG
+*****************************************************************************
+ Now the action secret part
+  - select the repo 
+  - click on settings
+  - click secret
+    - service_account_key
+        - paste the json content here
+    - Add secret
+
+-----------------------------------------------------
+- git add .
+- git status
+- git commit -m "some thing"
+- git push origin master
+
+- here we can see the yellow dot that means github actions are started
+- check the github actions
+- if every thing goes well
+- we can see the green dot that means github actions are finished
+
+
+- go to gcr 
+- 
