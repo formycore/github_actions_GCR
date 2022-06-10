@@ -25,7 +25,7 @@ jobs:
       run: docker build -t $IMAGE_NAME:$IMAGE_TAG .
     
     - name: Configure Docker client
-      run: | -
+      run: |-
         gcloud auth configure-docker --quiet
 
     - name: Push to GCR
